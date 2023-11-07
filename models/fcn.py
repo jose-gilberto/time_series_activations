@@ -2,6 +2,17 @@ import torch
 import torch.nn as nn
 
 
+class GAP1d(nn.Module):
+
+    def __init__(self, output_size: int = 1) -> None:
+        super().__init__()
+        self.gap = nn.AdaptiveAvgPool1d(output_size)
+        self.flatten = nn.Flatten()
+        
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return self.flatten(self.gap(x))
+
+
 class FCN(nn.Module):
 
     def __init__(self, dimension_num: int, activation: nn.Module) -> None:
@@ -26,7 +37,7 @@ class FCN(nn.Module):
                       padding='same'),
             nn.BatchNorm1d(256),
             activation,
-            nn.AvgPool1d(kernel_size=1)
+            GAP1d()
         ])
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:

@@ -1,0 +1,96 @@
+import torch
+import torch.nn as nn
+
+
+class GAP1d(nn.Module):
+
+    def __init__(self, output_size: int = 1) -> None:
+        super().__init__()
+        self.gap = nn.AdaptiveAvgPool1d(output_size)
+        self.flatten = nn.Flatten()
+        
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return self.flatten(self.gap(x))
+
+
+class ResNetBlock(nn.Module):
+
+    def __init__(self,
+                 in_channels: int,
+                 out_channels: int,
+                 activation: nn.Module) -> None:
+        super().__init__()
+
+        # Convolutios by kernel num
+        self.conv_8 = nn.Conv1d(in_channels,
+                                out_channels,
+                                kernel_size=8,
+                                padding='same')
+        self.conv_5 = nn.Conv1d(out_channels,
+                                out_channels,
+                                kernel_size=5,
+                                padding='same')
+        self.conv_3 = nn.Conv1d(out_channels,
+                                out_channels,
+                                kernel_size=8,
+                                padding='same')
+
+        self.conv_shortcut = nn.Conv1d(in_channels,
+                                       out_channels,
+                                       kernel_size=1,
+                                       padding='same')
+
+        self.bn_8 = nn.BatchNorm1d(out_channels)
+        self.bn_5 = nn.BatchNorm1d(out_channels)
+        self.bn_3 = nn.BatchNorm1d(out_channels)
+
+        self.activation = activation
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        # First convolution with kernel 8
+        conv_x = self.conv_8(x)
+        conv_x = self.bn_8(conv_x)
+        conv_x = self.activation(conv_x)
+
+        # Second convolution with kernel 5
+        conv_y = self.conv_5(conv_x)
+        conv_y = self.bn_5(conv_y)
+        conv_y = self.activation(conv_y)
+
+        # Third convolution with kernel 3
+        conv_z = self.conv_3(conv_y)
+        conv_z = self.bn_3(conv_z)
+
+        # Expand channels for the sum with shortcut
+        shortcut_ = self.conv_shortcut(x)
+        shortcut_ = self.bn_8(shortcut_)
+
+        # Prepare the output summing the shortcut
+        out = shortcut_ + conv_z
+        out = self.activation(out)
+        return out
+
+
+class ResNet(nn.Module):
+
+    def __init__(self,
+                 in_channels: int,
+                 out_channels: int,
+                 activation: nn.Module) -> None:
+        super().__init__()
+
+        self.block_1 = ResNetBlock(in_channels, out_channels, activation)
+        self.block_2 = ResNetBlock(out_channels, out_channels * 2, activation)
+        self.block_3 = ResNetBlock(out_channels * 2, out_channels * 2, activation)
+
+        self.global_avg_pooling = GAP1d()
+
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        out_1 = self.block_1(x)
+        out_2 = self.block_2(out_1)
+        out_3 = self.block_3(out_2)
+
+        gap_ = self.global_avg_pooling(out_3)
+        # gap_ = gap_layer.squeeze()
+        return gap_
