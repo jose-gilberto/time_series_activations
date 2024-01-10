@@ -48,9 +48,11 @@ class ResNetBlock(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         # First convolution with kernel 8
+        print('0', x.shape)
         conv_x = self.conv_8(x)
         conv_x = self.bn_8(conv_x)
         conv_x = self.activation(conv_x)
+        print('conv_x')
 
         # Second convolution with kernel 5
         conv_y = self.conv_5(conv_x)
@@ -87,8 +89,11 @@ class ResNet(nn.Module):
 
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        print('1', x.shape)
         out_1 = self.block_1(x)
+        print('2',out_1.shape)
         out_2 = self.block_2(out_1)
+        print('3',out_2.shape)
         out_3 = self.block_3(out_2)
 
         gap_ = self.global_avg_pooling(out_3)

@@ -15,7 +15,10 @@ class GAP1d(nn.Module):
 
 class FCN(nn.Module):
 
-    def __init__(self, dimension_num: int, activation: nn.Module) -> None:
+    def __init__(self, 
+                 sequence_len: int,
+                 dimension_num: int, 
+                 activation: nn.Module) -> None:
         super().__init__()
 
         self.layers = nn.ModuleList([
@@ -35,7 +38,7 @@ class FCN(nn.Module):
                       out_channels=128,
                       kernel_size=3,
                       padding='same'),
-            nn.BatchNorm1d(256),
+            nn.BatchNorm1d(128),
             activation,
             GAP1d()
         ])
