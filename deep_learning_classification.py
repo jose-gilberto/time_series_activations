@@ -121,6 +121,9 @@ for dataset_name in dataset_list:
             wandb_logger.finalize("success")
 
             # Free GPU
+            torch.cuda.empty_cache()
             device = torch.device("cpu")
             model_classifier.to(device)
+            model = None
+            model_classifier = None
             torch.cuda.empty_cache()
