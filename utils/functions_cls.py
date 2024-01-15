@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.optim as optim
 from pytorch_lightning import LightningModule
 from torch.utils.data import Dataset
+from sklearn.metrics import f1_score
 
 class TimeSeriesClassifier(LightningModule):
     def __init__(self, model, lr):
@@ -21,8 +22,10 @@ class TimeSeriesClassifier(LightningModule):
         loss = self.loss_fn(logits, labels.squeeze())
         y_hat = torch.argmax(logits, dim=1)
         acc = (y_hat == labels).float().mean()
+        f1 = f1_score(labels.squeeze().cpu().numpy(), y_hat.cpu().numpy(), average='macro')
         self.log('train_loss', loss, on_epoch=True)
         self.log('train_accuracy', acc, on_epoch=True)
+        self.log("val_f1", f1, prog_bar=False, on_epoch=True)
         return loss
 
     def validation_step(self, batch, batch_idx):
@@ -31,8 +34,10 @@ class TimeSeriesClassifier(LightningModule):
         loss = self.loss_fn(logits, labels.squeeze())
         y_hat = torch.argmax(logits, dim=1)
         acc = (y_hat == labels).float().mean()
+        f1 = f1_score(labels.squeeze().cpu().numpy(), y_hat.cpu().numpy(), average='macro')
         self.log('val_loss', loss, on_epoch=True)
         self.log('val_accuracy', acc, on_epoch=True)
+        self.log("val_f1", f1, prog_bar=False, on_epoch=True)
         return loss
 
     def configure_optimizers(self):
