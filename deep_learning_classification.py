@@ -1,5 +1,5 @@
 import torch
-from functions_cls import *
+from utils.functions_cls import *
 from torch.utils.data import DataLoader
 from aeon.datasets.tsc_data_lists import univariate_equal_length as dataset_list
 from aeon.datasets._data_loaders import load_classification
