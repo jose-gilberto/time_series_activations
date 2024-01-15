@@ -15,10 +15,10 @@ class GAP1d(nn.Module):
 
 class FCN(nn.Module):
 
-    def __init__(self, 
-                 sequence_len: int,
+    def __init__(self,
                  dimension_num: int, 
-                 activation: nn.Module) -> None:
+                 activation: nn.Module,
+                 **kwargs) -> None:
         super().__init__()
 
         self.layers = nn.ModuleList([

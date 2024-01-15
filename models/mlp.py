@@ -7,7 +7,8 @@ class MLP(nn.Module):
     def __init__(self,
                  sequence_len: int,
                  dimension_num: int,
-                 activation: nn.Module) -> None:
+                 activation: nn.Module,
+                 **kwargs) -> None:
         super().__init__()
 
         self.flatten = nn.Flatten()
