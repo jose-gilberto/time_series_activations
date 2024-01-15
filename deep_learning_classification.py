@@ -1,11 +1,12 @@
 import torch
-from utils.functions_cls import *
+from torch import nn
 from torch.utils.data import DataLoader
+from utils.functions_cls import *
 from aeon.datasets.tsc_data_lists import univariate_equal_length as dataset_list
 from aeon.datasets._data_loaders import load_classification
 from pytorch_lightning.loggers import WandbLogger
 from pytorch_lightning import Trainer
-from torch import nn
+from pytorch_lightning.callbacks import ModelCheckpoint
 
 # CUSTOM MODELS
 from models.fcn import FCN
@@ -107,14 +108,16 @@ for dataset_name in dataset_list:
                             'in_channels': dimension_num,
                             'out_channels': BATCH_SIZE,
                             'activation': ACTIVATION}
+            checkpoint_callback = ModelCheckpoint(dirpath='experiments', filename=f"{current_model}_{dataset_name}_{experiment}", verbose=True, monitor='val_loss')
             model = custom_estimator[current_model](**model_params).to(device)
             model_classifier = TimeSeriesClassifier(model=model, lr=LR)
 
             # Trainer 
-            trainer = Trainer(max_epochs=NUM_EPOCHS, logger=wandb_logger)
+            trainer = Trainer(max_epochs=NUM_EPOCHS, logger=wandb_logger, callbacks=[checkpoint_callback])
             trainer.fit(model_classifier, train_loader, test_loader)
 
             # Finish logging
+            wandb_logger.log_metrics({"experiment": experiment, "dataset": dataset_name, "model": current_model})
             wandb_logger.finalize("success")
 
             # Free GPU
