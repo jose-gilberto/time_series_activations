@@ -25,7 +25,7 @@ class TimeSeriesClassifier(LightningModule):
         f1 = f1_score(labels.squeeze().cpu().numpy(), y_hat.cpu().numpy(), average='macro')
         self.log('train_loss', loss, on_epoch=True)
         self.log('train_accuracy', acc, on_epoch=True)
-        self.log("val_f1", f1, prog_bar=False, on_epoch=True)
+        self.log("val_f1", f1, prog_bar=False, on_epoch=True) # type: ignore
         return loss
 
     def validation_step(self, batch, batch_idx):
@@ -37,7 +37,7 @@ class TimeSeriesClassifier(LightningModule):
         f1 = f1_score(labels.squeeze().cpu().numpy(), y_hat.cpu().numpy(), average='macro')
         self.log('val_loss', loss, on_epoch=True)
         self.log('val_accuracy', acc, on_epoch=True)
-        self.log("val_f1", f1, prog_bar=False, on_epoch=True)
+        self.log("val_f1", f1, prog_bar=False, on_epoch=True) # type: ignore
         return loss
 
     def configure_optimizers(self):
