@@ -50,7 +50,7 @@ class FCN(nn.Module):
 class FCNClassifier(FCN):
     def __init__(self, dimension_num: int, activation: nn.Module, num_classes: int, **kwargs) -> None:
         super().__init__(dimension_num, activation, **kwargs)
-        self.output_layer = nn.Linear(in_features=128, out_features=num_classes)  # Assuming 128 is the output size from the last GAP layer
+        self.output_layer = nn.Linear(in_features=128, out_features=num_classes)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x_ = super().forward(x)
@@ -61,8 +61,8 @@ class FCNClassifier(FCN):
 class FCNRegressor(FCN):
     def __init__(self, dimension_num: int, activation: nn.Module, output_size: int = 1, **kwargs) -> None:
         super().__init__(dimension_num, activation, **kwargs)
-        self.output_layer = nn.Linear(in_features=128, out_features=output_size)  # Assuming 128 is the output size from the last GAP layer
-
+        self.output_layer = nn.Linear(in_features=128, out_features=output_size)
+        
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x_ = super().forward(x)
         return self.output_layer(x_)
