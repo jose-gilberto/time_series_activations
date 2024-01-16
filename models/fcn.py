@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
 
-
 class GAP1d(nn.Module):
 
     def __init__(self, output_size: int = 1) -> None:
@@ -47,3 +46,23 @@ class FCN(nn.Module):
         for layer in self.layers:
             x = layer(x)
         return x
+    
+class FCNClassifier(FCN):
+    def __init__(self, dimension_num: int, activation: nn.Module, num_classes: int, **kwargs) -> None:
+        super().__init__(dimension_num, activation, **kwargs)
+        self.output_layer = nn.Linear(in_features=128, out_features=num_classes)  # Assuming 128 is the output size from the last GAP layer
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        x_ = super().forward(x)
+        x_ = self.output_layer(x_)
+        return x_
+
+
+class FCNRegressor(FCN):
+    def __init__(self, dimension_num: int, activation: nn.Module, output_size: int = 1, **kwargs) -> None:
+        super().__init__(dimension_num, activation, **kwargs)
+        self.output_layer = nn.Linear(in_features=128, out_features=output_size)  # Assuming 128 is the output size from the last GAP layer
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        x_ = super().forward(x)
+        return self.output_layer(x_)
