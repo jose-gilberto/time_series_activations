@@ -8,26 +8,18 @@ from pytorch_lightning.loggers.wandb import WandbLogger
 from pytorch_lightning import Trainer
 from pytorch_lightning.callbacks import ModelCheckpoint
 
-# CUSTOM MODELS
-from models.fcn import FCNClassifier
-from models.mlp import MLPClassifier
-from models.resnet import ResNetClassifier
+# Loading the CUSTOM MODELS into a dict
+from models import deeplearning_classifier as custom_estimator
 
 # Experiments and parameters
 NUM_EXPERIMENTS = 5
 NUM_EPOCHS = 50
 LR = 1e-4
-BATCH_SIZE = 64
+BATCH_SIZE = 16
+HIDDEN_CHANNELS = 128
 ACTIVATION = nn.ReLU()
 
-# Loading the Custom Models into a dict
-custom_estimator = {
-                    "FCNClassifier": FCNClassifier,
-                    "MLPClassifier": MLPClassifier,
-                    "ResNetClassifier": ResNetClassifier,
-                    }
-
-# UCR Datasets
+# Finished UCR Datasets list
 finished_datasets = [
                         # "ArticularyWordRecognition",
                         # "AtrialFibrillation",
@@ -57,16 +49,17 @@ finished_datasets = [
                         # "UWaveGestureLibrary",
                     ]
 
+# Finished Models list
 finished_models = [
+                    # 'MLPClassifier',
+                    # 'FCNClassifier',
+                    # 'ResNetClassifier',
+                    # 'IndividualInceptionClassifier',
                     # 'CNNClassifier',
                     # 'EncoderClassifier',
-                    # 'FCNClassifier',
                     # 'InceptionTimeClassifier',
-                    # 'IndividualInceptionClassifier',
                     # 'IndividualLITEClassifier',
                     # 'LITETimeClassifier',
-                    # 'MLPClassifier',
-                    # 'ResNetClassifier',
                     # 'TapNetClassifier'
                   ]
 
@@ -99,18 +92,20 @@ for dataset_name in dataset_list:
     
 
     for current_model in custom_estimator:
-        # print('***** MODEL:', current_model, "*****")
         if current_model in finished_models: continue
+        # print('***** MODEL:', current_model, "*****")
         for experiment in range(NUM_EXPERIMENTS):
 
             # Loading Models and Parameters
             device = torch.device("cuda")
-            model_params = {'sequence_len':sequence_len,
-                            'dimension_num':dimension_num,
-                            'in_channels': dimension_num,
-                            'num_classes': num_classes,
-                            'out_channels': BATCH_SIZE,
-                            'activation': ACTIVATION}
+            model_params = {
+                'sequence_len': sequence_len,
+                'dimension_num': dimension_num,
+                'num_classes': num_classes,
+                'out_channels': 128,
+                'hidden_channels': HIDDEN_CHANNELS,
+                'activation': ACTIVATION,
+            }
             checkpoint_callback = ModelCheckpoint(dirpath='experiments', filename=f"cls_{current_model}_{dataset_name}_{experiment}", verbose=True, monitor='val_loss')
             model = custom_estimator[current_model](**model_params).to(device)
             model_classifier = TimeSeriesClassifier(model=model, lr=LR)
@@ -124,7 +119,7 @@ for dataset_name in dataset_list:
             trainer.fit(model_classifier, train_loader, test_loader)
 
             # Finish logging
-            wandb_logger.log_metrics({"experiment": experiment, "dataset": dataset_name, "model": current_model})
+            wandb_logger.log_metrics({"model": current_model, "dataset": dataset_name, "experiment": experiment})
             wandb_logger.finalize("success")
 
             # Free GPU
