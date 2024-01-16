@@ -4,14 +4,14 @@ from torch.utils.data import DataLoader
 from utils.functions_cls import *
 from aeon.datasets.tsc_data_lists import univariate_equal_length as dataset_list
 from aeon.datasets._data_loaders import load_classification
-from pytorch_lightning.loggers import WandbLogger
+from pytorch_lightning.loggers.wandb import WandbLogger
 from pytorch_lightning import Trainer
 from pytorch_lightning.callbacks import ModelCheckpoint
 
 # CUSTOM MODELS
-from models.fcn import FCN
-from models.mlp import MLP
-from models.resnet import ResNet
+from models.fcn import FCNClassifier
+from models.mlp import MLPClassifier
+from models.resnet import ResNetClassifier
 
 # Experiments and parameters
 NUM_EXPERIMENTS = 5
@@ -22,9 +22,9 @@ ACTIVATION = nn.ReLU()
 
 # Loading the Custom Models into a dict
 custom_estimator = {
-                    "FCN": FCN,
-                    "MLP": MLP,
-                    "ResNet": ResNet,
+                    "FCNClassifier": FCNClassifier,
+                    "MLPClassifier": MLPClassifier,
+                    "ResNetClassifier": ResNetClassifier,
                     }
 
 # UCR Datasets
@@ -80,6 +80,7 @@ for dataset_name in dataset_list:
     X_train, y_train = load_classification(dataset_name, split='train')
     X_test, y_test = load_classification(dataset_name, split='test')
     train_label_mapping = {label: idx for idx, label in enumerate(set(y_train))}
+    num_classes = len(set(y_train))
 
     # Lenghts and dimensions
     try:
@@ -95,6 +96,7 @@ for dataset_name in dataset_list:
     # Dataloaders
     train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=4)
     test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=4)
+    
 
     for current_model in custom_estimator:
         # print('***** MODEL:', current_model, "*****")
@@ -106,14 +108,19 @@ for dataset_name in dataset_list:
             model_params = {'sequence_len':sequence_len,
                             'dimension_num':dimension_num,
                             'in_channels': dimension_num,
+                            'num_classes': num_classes,
                             'out_channels': BATCH_SIZE,
                             'activation': ACTIVATION}
-            checkpoint_callback = ModelCheckpoint(dirpath='experiments', filename=f"{current_model}_{dataset_name}_{experiment}", verbose=True, monitor='val_loss')
+            checkpoint_callback = ModelCheckpoint(dirpath='experiments', filename=f"cls_{current_model}_{dataset_name}_{experiment}", verbose=True, monitor='val_loss')
             model = custom_estimator[current_model](**model_params).to(device)
             model_classifier = TimeSeriesClassifier(model=model, lr=LR)
 
             # Trainer 
-            trainer = Trainer(max_epochs=NUM_EPOCHS, logger=wandb_logger, callbacks=[checkpoint_callback])
+            trainer = Trainer(max_epochs=NUM_EPOCHS, 
+                              logger=wandb_logger, 
+                              callbacks=[checkpoint_callback],
+                            #   enable_model_summary = False
+                              )
             trainer.fit(model_classifier, train_loader, test_loader)
 
             # Finish logging
@@ -121,7 +128,6 @@ for dataset_name in dataset_list:
             wandb_logger.finalize("success")
 
             # Free GPU
-            torch.cuda.empty_cache()
             device = torch.device("cpu")
             model_classifier.to(device)
             model = None
