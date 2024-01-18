@@ -1,6 +1,6 @@
 import torch
 from torch import nn
-import pytorch_lightning as pl
+import torch.nn.functional as F
 from typing import Tuple
 
 
@@ -82,24 +82,28 @@ class InceptionTime(nn.Module):
                  **kwargs) -> None:
         super().__init__()
         self.inception_block = InceptionBlock(dimension_num, hidden_channels, activation)
-        self.fc = nn.Linear(hidden_channels * 4, num_classes)
         self.activation = activation
     
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.inception_block(x)
         x = torch.mean(x, dim=-1)
-        return self.activation(self.fc(x))
+        return x
     
 class InceptionTimeClassifier(InceptionTime):
-    def __init__(self, dimension_num: int, hidden_channels: int, num_classes: int, activation: nn.Module,**kwargs) -> None:
+    def __init__(self, dimension_num: int, hidden_channels: int, num_classes: int, activation: nn.Module, **kwargs) -> None:
         super().__init__(dimension_num, hidden_channels, num_classes, activation)
+        self.output_layer = nn.Linear(hidden_channels * 4, num_classes)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return super().forward(x)
+        x_ = super().forward(x)
+        x_ = self.output_layer(x_)
+        return F.softmax(x_, dim=-1)
 
 class InceptionTimeRegressor(InceptionTime):
     def __init__(self, dimension_num: int, hidden_channels: int, activation: nn.Module, num_classes: int = 1, **kwargs) -> None:
         super().__init__(dimension_num, hidden_channels, num_classes, activation)
+        self.output_layer = nn.Linear(hidden_channels * 4, num_classes)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return super().forward(x)
+        x_ = super().forward(x)
+        return self.output_layer(x_)

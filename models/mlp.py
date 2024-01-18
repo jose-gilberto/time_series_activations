@@ -43,7 +43,7 @@ class MLPClassifier(MLP):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x_ = super().forward(x)
         x_ = self.output_layer(x_)
-        return x_
+        return nn.functional.softmax(x_, dim=1)
 
 class MLPRegressor(MLP):
     def __init__(self, sequence_len: int, dimension_num: int, activation: nn.Module, output_size: int = 1, **kwargs) -> None:

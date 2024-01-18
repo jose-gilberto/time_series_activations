@@ -97,7 +97,7 @@ class ResNetClassifier(ResNet):
     def forward(self, x):
         x_ = super().forward(x)
         x_ = self.output_layer(x_)
-        return x_
+        return nn.functional.softmax(x_, dim=1)
 
 
 class ResNetRegressor(ResNet):
