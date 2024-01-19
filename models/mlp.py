@@ -1,13 +1,13 @@
 import torch
 from torch import nn
 
-
 class MLP(nn.Module):
 
     def __init__(self,
                  sequence_len: int,
                  dimension_num: int,
-                 activation: nn.Module) -> None:
+                 activation: nn.Module,
+                 **kwargs) -> None:
         super().__init__()
 
         self.flatten = nn.Flatten()
@@ -34,3 +34,22 @@ class MLP(nn.Module):
         for layer in self.layers:
             x_ = layer(x_)
         return x_
+
+class MLPClassifier(MLP):
+    def __init__(self, sequence_len: int, dimension_num: int, activation: nn.Module, num_classes: int, **kwargs) -> None:
+        super().__init__(sequence_len, dimension_num, activation, **kwargs)
+        self.output_layer = nn.Linear(in_features=500, out_features=num_classes)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        x_ = super().forward(x)
+        x_ = self.output_layer(x_)
+        return nn.functional.softmax(x_, dim=1)
+
+class MLPRegressor(MLP):
+    def __init__(self, sequence_len: int, dimension_num: int, activation: nn.Module, output_size: int = 1, **kwargs) -> None:
+        super().__init__(sequence_len, dimension_num, activation, **kwargs)
+        self.output_layer = nn.Linear(in_features=500, out_features=output_size)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        x_ = super().forward(x)
+        return self.output_layer(x_)

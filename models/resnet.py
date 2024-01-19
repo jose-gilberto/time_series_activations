@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
 
-
 class GAP1d(nn.Module):
 
     def __init__(self, output_size: int = 1) -> None:
@@ -15,14 +14,11 @@ class GAP1d(nn.Module):
 
 class ResNetBlock(nn.Module):
 
-    def __init__(self,
-                 in_channels: int,
-                 out_channels: int,
-                 activation: nn.Module) -> None:
+    def __init__(self, dimension_num, out_channels, activation: nn.Module, **kwargs) -> None:
         super().__init__()
 
         # Convolutios by kernel num
-        self.conv_8 = nn.Conv1d(in_channels,
+        self.conv_8 = nn.Conv1d(dimension_num,
                                 out_channels,
                                 kernel_size=8,
                                 padding='same')
@@ -35,7 +31,7 @@ class ResNetBlock(nn.Module):
                                 kernel_size=8,
                                 padding='same')
 
-        self.conv_shortcut = nn.Conv1d(in_channels,
+        self.conv_shortcut = nn.Conv1d(dimension_num,
                                        out_channels,
                                        kernel_size=1,
                                        padding='same')
@@ -73,13 +69,10 @@ class ResNetBlock(nn.Module):
 
 class ResNet(nn.Module):
 
-    def __init__(self,
-                 in_channels: int,
-                 out_channels: int,
-                 activation: nn.Module) -> None:
+    def __init__(self, dimension_num: int, out_channels: int, activation: nn.Module, **kwargs) -> None:
         super().__init__()
 
-        self.block_1 = ResNetBlock(in_channels, out_channels, activation)
+        self.block_1 = ResNetBlock(dimension_num, out_channels, activation)
         self.block_2 = ResNetBlock(out_channels, out_channels * 2, activation)
         self.block_3 = ResNetBlock(out_channels * 2, out_channels * 2, activation)
 
@@ -94,3 +87,24 @@ class ResNet(nn.Module):
         gap_ = self.global_avg_pooling(out_3)
         # gap_ = gap_layer.squeeze()
         return gap_
+    
+
+class ResNetClassifier(ResNet):
+    def __init__(self, dimension_num: int, out_channels: int, activation: nn.Module, num_classes: int, **kwargs) -> None:
+        super().__init__(dimension_num, out_channels, activation, **kwargs)
+        self.output_layer = nn.Linear(out_channels * 2, num_classes)
+
+    def forward(self, x):
+        x_ = super().forward(x)
+        x_ = self.output_layer(x_)
+        return nn.functional.softmax(x_, dim=1)
+
+
+class ResNetRegressor(ResNet):
+    def __init__(self, dimension_num: int, out_channels: int, activation: nn.Module, output_size: int = 1, **kwargs) -> None:
+        super().__init__(dimension_num, out_channels, activation, **kwargs)
+        self.output_layer = nn.Linear(out_channels * 2, output_size)
+
+    def forward(self, x):
+        x_ = super().forward(x)
+        return self.output_layer(x_)
