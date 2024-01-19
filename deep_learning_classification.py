@@ -2,9 +2,10 @@ import torch
 from torch import nn
 from torch.utils.data import DataLoader
 from utils.functions_cls import *
+import pandas as pd
 from aeon.datasets.tsc_data_lists import univariate_equal_length as dataset_list
 from aeon.datasets._data_loaders import load_classification
-from pytorch_lightning.loggers.wandb import WandbLogger
+# from pytorch_lightning.loggers.wandb import WandbLogger
 from pytorch_lightning import Trainer
 from pytorch_lightning.callbacks import ModelCheckpoint
 
@@ -12,16 +13,16 @@ from pytorch_lightning.callbacks import ModelCheckpoint
 from models import deeplearning_classifier as custom_estimator
 
 # Experiments and parameters
-NUM_EXPERIMENTS = 5
-NUM_EPOCHS = 50
-LR = 1e-4
+NUM_EXPERIMENTS = 10
+NUM_EPOCHS = 5000
+LR = 1e-1
 BATCH_SIZE = 16
 HIDDEN_CHANNELS = 128
 ACTIVATION = nn.ReLU()
 
 # Finished UCR Datasets list
-finished_datasets = [
-                        # "ArticularyWordRecognition",
+datasets = [
+    "ArrowHead",
                         # "AtrialFibrillation",
                         # "BasicMotions",
                         # "Cricket",
@@ -52,12 +53,12 @@ finished_datasets = [
 # Finished Models list
 finished_models = [
                     # 'MLPClassifier',
-                    # 'FCNClassifier',
-                    # 'ResNetClassifier',
+                    'FCNClassifier',
+                    'ResNetClassifier',
                     # 'IndividualInceptionClassifier',
                     # 'CNNClassifier',
                     # 'EncoderClassifier',
-                    # 'InceptionTimeClassifier',
+                    'InceptionTimeClassifier',
                     # 'IndividualLITEClassifier',
                     # 'LITETimeClassifier',
                     # 'TapNetClassifier'
@@ -65,10 +66,18 @@ finished_models = [
 
 
 # Logger
-wandb_logger = WandbLogger(log_model="all", project="ActivationFunctions")
+# wandb_logger = WandbLogger(log_model="all", project="ActivationFunctions")
 
-for dataset_name in dataset_list:
-    if dataset_name in finished_datasets: continue
+results_dict = {
+    'dataset': [],
+    'model': [],
+    'experiment': [],
+    'acc': [],
+    'f1': []
+}
+
+for dataset_name in datasets:
+
     # print('====== DATASET:', dataset_name, "======")
     X_train, y_train = load_classification(dataset_name, split='train')
     X_test, y_test = load_classification(dataset_name, split='test')
@@ -97,7 +106,6 @@ for dataset_name in dataset_list:
         for experiment in range(NUM_EXPERIMENTS):
 
             # Loading Models and Parameters
-            device = torch.device("cuda")
             model_params = {
                 'sequence_len': sequence_len,
                 'dimension_num': dimension_num,
@@ -106,25 +114,40 @@ for dataset_name in dataset_list:
                 'hidden_channels': HIDDEN_CHANNELS,
                 'activation': ACTIVATION,
             }
-            checkpoint_callback = ModelCheckpoint(dirpath='experiments', filename=f"cls_{current_model}_{dataset_name}_{experiment}", verbose=True, monitor='val_loss')
-            model = custom_estimator[current_model](**model_params).to(device)
-            model_classifier = TimeSeriesClassifier(model=model, lr=LR)
+            # checkpoint_callback = ModelCheckpoint(dirpath='experiments', filename=f"cls_{current_model}_{dataset_name}_{experiment}", verbose=True, monitor='train_loss')
+            model = custom_estimator[current_model](**model_params)
+            model_classifier = TimeSeriesClassifier(model=model, optimizer=torch.optim.Adadelta(model.parameters(), lr=LR, eps=1e-8))
 
             # Trainer 
             trainer = Trainer(max_epochs=NUM_EPOCHS, 
-                              logger=wandb_logger, 
-                              callbacks=[checkpoint_callback],
+                              accelerator='gpu',
+                              devices=-1,
+                            #   logger=wandb_logger, 
+                            #   callbacks=[checkpoint_callback],
                             #   enable_model_summary = False
                               )
-            trainer.fit(model_classifier, train_loader, test_loader)
+            
+            trainer.fit(model_classifier, train_loader)
+            results = trainer.test(model_classifier, test_loader)
+            
+            results_dict['dataset'].append(dataset_name)
+            results_dict['model'].append(current_model)
+            results_dict['experiment'].append(experiment)
+            results_dict['acc'].append(results[0]['accuracy'])
+            results_dict['f1'].append(results[0]['f1'])
+            
+            results_dataframe = pd.DataFrame(results_dict)
+            results_dataframe.to_csv('./ucr_classification.csv', index=False)
+            
+
 
             # Finish logging
-            wandb_logger.log_metrics({"model": current_model, "dataset": dataset_name, "experiment": experiment})
-            wandb_logger.finalize("success")
+            # wandb_logger.log_metrics({"model": current_model, "dataset": dataset_name, "experiment": experiment})
+            # wandb_logger.finalize("success")
 
             # Free GPU
-            device = torch.device("cpu")
-            model_classifier.to(device)
-            model = None
-            model_classifier = None
-            torch.cuda.empty_cache()
+            # device = torch.device("cpu")
+            # model_classifier.to(device)
+            # model = None
+            # model_classifier = None
+            # torch.cuda.empty_cache()

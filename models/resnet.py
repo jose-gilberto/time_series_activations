@@ -92,12 +92,13 @@ class ResNet(nn.Module):
 class ResNetClassifier(ResNet):
     def __init__(self, dimension_num: int, out_channels: int, activation: nn.Module, num_classes: int, **kwargs) -> None:
         super().__init__(dimension_num, out_channels, activation, **kwargs)
+        self.num_classes = num_classes
         self.output_layer = nn.Linear(out_channels * 2, num_classes)
 
     def forward(self, x):
         x_ = super().forward(x)
         x_ = self.output_layer(x_)
-        return nn.functional.softmax(x_, dim=1)
+        return x_
 
 
 class ResNetRegressor(ResNet):

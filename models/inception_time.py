@@ -92,12 +92,13 @@ class InceptionTime(nn.Module):
 class InceptionTimeClassifier(InceptionTime):
     def __init__(self, dimension_num: int, hidden_channels: int, num_classes: int, activation: nn.Module, **kwargs) -> None:
         super().__init__(dimension_num, hidden_channels, num_classes, activation)
+        self.num_classes = num_classes
         self.output_layer = nn.Linear(hidden_channels * 4, num_classes)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x_ = super().forward(x)
         x_ = self.output_layer(x_)
-        return F.softmax(x_, dim=-1)
+        return x_
 
 class InceptionTimeRegressor(InceptionTime):
     def __init__(self, dimension_num: int, hidden_channels: int, activation: nn.Module, num_classes: int = 1, **kwargs) -> None:

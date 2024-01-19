@@ -38,12 +38,13 @@ class MLP(nn.Module):
 class MLPClassifier(MLP):
     def __init__(self, sequence_len: int, dimension_num: int, activation: nn.Module, num_classes: int, **kwargs) -> None:
         super().__init__(sequence_len, dimension_num, activation, **kwargs)
+        self.num_classes = num_classes
         self.output_layer = nn.Linear(in_features=500, out_features=num_classes)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x_ = super().forward(x)
         x_ = self.output_layer(x_)
-        return nn.functional.softmax(x_, dim=1)
+        return x_
 
 class MLPRegressor(MLP):
     def __init__(self, sequence_len: int, dimension_num: int, activation: nn.Module, output_size: int = 1, **kwargs) -> None:
