@@ -5,58 +5,51 @@ from pytorch_lightning import LightningModule
 from torch.utils.data import Dataset
 
 class TimeSeriesRegressor(LightningModule):
-    def __init__(self, model, lr):
+    def __init__(self, model, optimizer):
         super(TimeSeriesRegressor, self).__init__()
         self.model = model
         self.loss_fn_mse = nn.MSELoss()
         self.loss_fn_mae = nn.L1Loss()
-        self.lr = lr
+        self.opt = optimizer
 
     def forward(self, x):
         return self.model(x)
 
     def training_step(self, batch, batch_idx):
         inputs, labels = batch
-        y_hat = self(inputs)
-        # print('train', inputs.shape, labels.shape, y_hat.shape)
-
-        # Mean Squared Error (MSE) loss
-        loss_mse = self.loss_fn_mse(y_hat, labels)
-        
-        # Mean Absolute Error (MAE) loss
-        loss_mae = self.loss_fn_mae(y_hat, labels)
-        
-        # Root Mean Squared Error (RMSE)
-        loss_rmse = torch.sqrt(loss_mse)
-        
+        y_hat = self(inputs) # Mean Squared Error (MSE) loss
+        loss_mae = self.loss_fn_mae(y_hat, labels) # Mean Squared Error (MSE) loss
+        loss_mse = self.loss_fn_mse(y_hat, labels) # Mean Absolute Error (MAE) loss
+        loss_rmse = torch.sqrt(loss_mse) # Root Mean Squared Error (RMSE)
         self.log('train_mse', loss_mse, on_epoch=True)
         self.log('train_mae', loss_mae, on_epoch=True)
         self.log('train_rmse', loss_rmse, on_epoch=True)
-        
         return loss_mse
 
     def validation_step(self, batch, batch_idx):
         inputs, labels = batch
-        y_hat = self(inputs)
-        # print('val', inputs.shape, labels.shape, y_hat.shape)
-
-        # Mean Squared Error (MSE) loss
-        loss_mse = self.loss_fn_mse(y_hat, labels)
-        
-        # Mean Absolute Error (MAE) loss
-        loss_mae = self.loss_fn_mae(y_hat, labels)
-        
-        # Root Mean Squared Error (RMSE)
-        loss_rmse = torch.sqrt(loss_mse)
-        
+        y_hat = self(inputs) # Mean Squared Error (MSE) loss
+        loss_mae = self.loss_fn_mae(y_hat, labels) # Mean Squared Error (MSE) loss
+        loss_mse = self.loss_fn_mse(y_hat, labels) # Mean Absolute Error (MAE) loss
+        loss_rmse = torch.sqrt(loss_mse) # Root Mean Squared Error (RMSE)
         self.log('val_loss', loss_mse, on_epoch=True)
         self.log('val_mae', loss_mae, on_epoch=True)
         self.log('val_rmse', loss_rmse, on_epoch=True)
-        
         return loss_mse
-
+    
+    def test_step(self, batch, batch_idx):
+        inputs, labels = batch
+        y_hat = self(inputs) # Mean Squared Error (MSE) loss
+        loss_mae = self.loss_fn_mae(y_hat, labels) # Mean Squared Error (MSE) loss
+        loss_mse = self.loss_fn_mse(y_hat, labels) # Mean Absolute Error (MAE) loss
+        loss_rmse = torch.sqrt(loss_mse) # Root Mean Squared Error (RMSE)
+        self.log('val_loss', loss_mse, on_epoch=True)
+        self.log('val_mae', loss_mae, on_epoch=True)
+        self.log('val_rmse', loss_rmse, on_epoch=True)
+        return
+    
     def configure_optimizers(self):
-        return optim.Adam(self.parameters(), lr=self.lr)
+        return self.opt
 
 class TimeSeriesDataset(Dataset):
     def __init__(self, X, y):
