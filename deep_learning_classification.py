@@ -50,12 +50,12 @@ datasets = [
     "UWaveGestureLibrary",
 ]
 
-# Finished Models list
+# Finished Models list ( The items in this list WILL NOT BE RUN )
 finished_models = [
-    'MLPClassifier',
-    'FCNClassifier',
-    'ResNetClassifier',
-    'InceptionTimeClassifier',
+    # 'MLPClassifier',
+    # 'FCNClassifier',
+    # 'ResNetClassifier',
+    # 'InceptionTimeClassifier',
 ]
 
 
@@ -94,9 +94,10 @@ for dataset_name in datasets:
     
 
     for current_model in custom_estimator:
-
+        if current_model in finished_models: continue
+        
         for experiment in range(NUM_EXPERIMENTS):
-
+            
             # Loading Models and Parameters
             model_params = {
                 'sequence_len': sequence_len,

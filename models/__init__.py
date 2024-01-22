@@ -7,7 +7,6 @@ __all__ = [
     "ResNetRegressor",
     "FCNClassifier",
     "FCNRegressor",
-    
 ]
 
 from .mlp import MLPClassifier, MLPRegressor

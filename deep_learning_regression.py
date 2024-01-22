@@ -43,7 +43,7 @@ datasets = [
 ]
 
 
-# Finished Models list
+# Finished Models list ( The items in this list WILL NOT BE RUN )
 finished_models = [
     "FCNRegressor",
     "MLPRegressor",
@@ -85,7 +85,8 @@ for dataset_name in datasets:
     test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=4)
 
     for current_model in custom_estimator:
-
+        if current_model in finished_models: continue
+        
         for experiment in range(NUM_EXPERIMENTS):
 
             # Loading Models and Parameters
