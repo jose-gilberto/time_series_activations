@@ -32,7 +32,7 @@ class TimeSeriesRegressor(LightningModule):
         loss_mae = self.loss_fn_mae(y_hat, labels) # Mean Squared Error (MSE) loss
         loss_mse = self.loss_fn_mse(y_hat, labels) # Mean Absolute Error (MAE) loss
         loss_rmse = torch.sqrt(loss_mse) # Root Mean Squared Error (RMSE)
-        self.log('val_loss', loss_mse, on_epoch=True)
+        self.log('val_mse', loss_mse, on_epoch=True)
         self.log('val_mae', loss_mae, on_epoch=True)
         self.log('val_rmse', loss_rmse, on_epoch=True)
         return loss_mse
@@ -43,9 +43,9 @@ class TimeSeriesRegressor(LightningModule):
         loss_mae = self.loss_fn_mae(y_hat, labels) # Mean Squared Error (MSE) loss
         loss_mse = self.loss_fn_mse(y_hat, labels) # Mean Absolute Error (MAE) loss
         loss_rmse = torch.sqrt(loss_mse) # Root Mean Squared Error (RMSE)
-        self.log('val_loss', loss_mse, on_epoch=True)
-        self.log('val_mae', loss_mae, on_epoch=True)
-        self.log('val_rmse', loss_rmse, on_epoch=True)
+        self.log('mse', loss_mse, on_epoch=True)
+        self.log('mae', loss_mae, on_epoch=True)
+        self.log('rmse', loss_rmse, on_epoch=True)
         return
     
     def configure_optimizers(self):
