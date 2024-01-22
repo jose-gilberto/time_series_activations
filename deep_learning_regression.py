@@ -59,8 +59,9 @@ results_dict = {
     'dataset': [],
     'model': [],
     'experiment': [],
-    'acc': [],
-    'f1': []
+    'mse': [],
+    'mae': [],
+    'rmse': []
 }
 
 for dataset_name in datasets:
