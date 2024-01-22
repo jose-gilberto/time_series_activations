@@ -13,9 +13,9 @@ from aeon.datasets._data_loaders import load_regression
 from models import deeplearning_regressor as custom_estimator
 
 # Experiments and parameters
-NUM_EXPERIMENTS = 5
-NUM_EPOCHS = 50
-LR = 1e-4
+NUM_EXPERIMENTS = 10
+NUM_EPOCHS = 5000
+LR = 1e-1
 BATCH_SIZE = 16
 HIDDEN_CHANNELS = 128
 ACTIVATION = nn.ReLU()
