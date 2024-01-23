@@ -17,7 +17,6 @@ class TimeSeriesClassifier(LightningModule):
 
     def training_step(self, batch, batch_idx):
         inputs, labels = batch
-        # print(inputs.shape)
         logits = self(inputs)
         loss = self.loss_fn(logits, labels.squeeze())
         y_hat = torch.argmax(logits, dim=1)
@@ -43,11 +42,9 @@ class TimeSeriesClassifier(LightningModule):
     def test_step(self, batch, batch_idx):
         inputs, labels = batch
         logits = self(inputs)
-
         y_hat = torch.argmax(logits, dim=1)
         acc = (y_hat == labels).float().mean()
         f1 = f1_score(labels.squeeze().cpu().numpy(), y_hat.cpu().numpy(), average='macro')
-
         self.log('accuracy', acc, on_epoch=True)
         self.log("f1", f1, prog_bar=False, on_epoch=True) # type: ignore
         return

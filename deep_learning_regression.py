@@ -1,62 +1,71 @@
 import torch
+import pandas as pd
 from torch import nn
 from torch.utils.data import DataLoader
 from utils.functions_tser import *
-from aeon.datasets.tser_data_lists import tser_all as dataset_list
-from aeon.datasets._data_loaders import load_regression
-from pytorch_lightning.loggers.wandb import WandbLogger
 from pytorch_lightning import Trainer
 from pytorch_lightning.callbacks import ModelCheckpoint
+from aeon.datasets._data_loaders import load_regression
+# from aeon.datasets.tser_data_lists import tser_all as dataset_list
+# from pytorch_lightning.loggers.wandb import WandbLogger
 
 # Loading the CUSTOM MODELS into a dict
 from models import deeplearning_regressor as custom_estimator
 
 # Experiments and parameters
-NUM_EXPERIMENTS = 5
-NUM_EPOCHS = 50
-LR = 1e-4
+NUM_EXPERIMENTS = 10
+NUM_EPOCHS = 5000
+LR = 1e-1
 BATCH_SIZE = 16
 HIDDEN_CHANNELS = 128
 ACTIVATION = nn.ReLU()
 
 # Finished UCR Datasets list
-finished_datasets = [
-                    #  'AppliancesEnergy', 
-                     'HouseholdPowerConsumption1',
-                    #  'HouseholdPowerConsumption2',
-                    #  'BenzeneConcentration',
-                    #  'BeijingPM25Quality', 
-                    #  'BeijingPM10Quality', 
-                    #  'LiveFuelMoistureContent', 
-                    #  'FloodModeling1', 
-                    #  'FloodModeling2', 
-                    #  'FloodModeling3', 
-                    #  'AustraliaRainfall', 
-                    #  'IEEEPPG', 
-                    #  'BIDMC32RR', 
-                    #  'BIDMC32HR', 
-                    #  'BIDMC32SpO2', 
-                    #  'NewsHeadlineSentiment', 
-                    #  'NewsTitleSentiment', 
-                    #  'Covid3Month',
-                    ]
+datasets = [
+    'AppliancesEnergy', 
+    'HouseholdPowerConsumption1',
+    'HouseholdPowerConsumption2',
+    'BenzeneConcentration',
+    'BeijingPM25Quality', 
+    'BeijingPM10Quality', 
+    'LiveFuelMoistureContent', 
+    'FloodModeling1', 
+    'FloodModeling2', 
+    'FloodModeling3', 
+    'AustraliaRainfall', 
+    'IEEEPPG', 
+    'BIDMC32RR', 
+    'BIDMC32HR', 
+    'BIDMC32SpO2', 
+    'NewsHeadlineSentiment', 
+    'NewsTitleSentiment', 
+    'Covid3Month',
+]
 
 
-# Finished Models list
+# Finished Models list ( The items in this list WILL NOT BE RUN )
 finished_models = [
-                    # "FCNRegressor",
-                    # "MLPRegressor",
-                    # "ResNetRegressor",
-                    # "InceptionTimeRegressor",
-                    ]
+    "FCNRegressor",
+    "MLPRegressor",
+    "ResNetRegressor",
+    "InceptionTimeRegressor",
+]
 
 
 # Logger
-wandb_logger = WandbLogger(log_model="all", project="ActivationFunctions")
+# wandb_logger = WandbLogger(log_model="all", project="ActivationFunctions")
 
-for dataset_name in dataset_list:
-    if dataset_name in finished_datasets: continue
-    # print('====== DATASET:', dataset_name, "======")
+results_dict = {
+    'dataset': [],
+    'model': [],
+    'experiment': [],
+    'mse': [],
+    'mae': [],
+    'rmse': []
+}
+
+for dataset_name in datasets:
+
     X_train, y_train = load_regression(dataset_name, split='train')
     X_test, y_test = load_regression(dataset_name, split='test')
 
@@ -77,6 +86,7 @@ for dataset_name in dataset_list:
 
     for current_model in custom_estimator:
         if current_model in finished_models: continue
+        
         for experiment in range(NUM_EXPERIMENTS):
 
             # Loading Models and Parameters
@@ -88,25 +98,43 @@ for dataset_name in dataset_list:
                 'hidden_channels': HIDDEN_CHANNELS,
                 'activation': ACTIVATION,
             }
-            checkpoint_callback = ModelCheckpoint(dirpath='experiments', filename=f"reg_{current_model}_{dataset_name}_{experiment}", verbose=True, monitor='val_loss')
+            # checkpoint_callback = ModelCheckpoint(dirpath='experiments', filename=f"reg_{current_model}_{dataset_name}_{experiment}", verbose=True, monitor='val_loss')
             model = custom_estimator[current_model](**model_params).to(device)
-            model_regressor = TimeSeriesRegressor(model=model, lr=LR)
+            model_regressor = TimeSeriesRegressor(model=model, optimizer=torch.optim.Adam(model.parameters(), lr=LR, eps=1e-8))
 
             # Trainer 
-            trainer = Trainer(max_epochs=NUM_EPOCHS,
-                               logger=wandb_logger,
-                               callbacks=[checkpoint_callback], 
-                            #   enable_model_summary = False
-                              )
+            trainer = Trainer(
+                max_epochs=NUM_EPOCHS,
+                accelerator='gpu',
+                devices=-1,
+                # logger=wandb_logger,
+                # callbacks=[checkpoint_callback], 
+                # enable_model_summary = False
+            )
+            
             trainer.fit(model_regressor, train_loader, test_loader)
-
+            
+            results = trainer.test(model_regressor, test_loader)
+            
+            results_dict['dataset'].append(dataset_name)
+            results_dict['model'].append(current_model)
+            results_dict['experiment'].append(experiment)
+            results_dict['mse'].append(results[0]['mse'])
+            results_dict['mae'].append(results[0]['mae'])
+            results_dict['rmse'].append(results[0]['rmse'])
+            
+            results_dataframe = pd.DataFrame(results_dict)
+            results_dataframe.to_csv('./ucr_regression.csv', index=False)
+            
+            
+            
             # Finish logging
-            wandb_logger.log_metrics({"model": current_model, "dataset": dataset_name, "experiment": experiment})
-            wandb_logger.finalize("success")
+            # wandb_logger.log_metrics({"model": current_model, "dataset": dataset_name, "experiment": experiment})
+            # wandb_logger.finalize("success")
 
             # Free GPU
-            device = torch.device("cpu")
-            model_regressor.to(device)
-            model = None
-            model_regressor = None
-            torch.cuda.empty_cache()
+            # device = torch.device("cpu")
+            # model_regressor.to(device)
+            # model = None
+            # model_regressor = None
+            # torch.cuda.empty_cache()

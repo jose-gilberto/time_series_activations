@@ -1,1 +1,5 @@
 data/*
+wandb/*
+lightning_logs/*
+experiments/*
+**/__pycache__/
