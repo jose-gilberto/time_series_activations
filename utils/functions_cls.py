@@ -18,7 +18,6 @@ class TimeSeriesClassifier(LightningModule):
 
     def training_step(self, batch, batch_idx):
         inputs, labels = batch
-        # print(inputs.shape)
         logits = self(inputs)
 
         if self.model.num_classes == 2:

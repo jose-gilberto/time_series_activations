@@ -1,4 +1,5 @@
 import torch
+import pandas as pd
 from torch import nn
 from torch.utils.data import DataLoader
 from utils.functions_cls import *
@@ -8,6 +9,9 @@ from aeon.datasets._data_loaders import load_classification
 # from pytorch_lightning.loggers.wandb import WandbLogger
 from pytorch_lightning import Trainer
 from pytorch_lightning.callbacks import ModelCheckpoint
+from aeon.datasets._data_loaders import load_classification
+# from aeon.datasets.tsc_data_lists import univariate_equal_length as dataset_list
+# from pytorch_lightning.loggers.wandb import WandbLogger
 
 # Loading the CUSTOM MODELS into a dict
 from models import deeplearning_classifier as custom_estimator
@@ -68,17 +72,11 @@ datasets = [
 
 # Finished Models list
 finished_models = [
-                    # 'MLPClassifier',
-                    'FCNClassifier',
-                    'ResNetClassifier',
-                    # 'IndividualInceptionClassifier',
-                    # 'CNNClassifier',
-                    # 'EncoderClassifier',
-                    'InceptionTimeClassifier',
-                    # 'IndividualLITEClassifier',
-                    # 'LITETimeClassifier',
-                    # 'TapNetClassifier'
-                  ]
+    # 'MLPClassifier',
+    # 'FCNClassifier',
+    # 'ResNetClassifier',
+    # 'InceptionTimeClassifier',
+]
 
 
 # Logger
@@ -123,7 +121,7 @@ for dataset_name in univariate2015:
         print('***** MODEL:', current_model, "*****")
 
         for experiment in range(NUM_EXPERIMENTS):
-
+            
             # Loading Models and Parameters
             model_params = {
                 'sequence_len': sequence_len,
@@ -138,13 +136,14 @@ for dataset_name in univariate2015:
             model_classifier = TimeSeriesClassifier(model=model, optimizer=torch.optim.Adadelta(model.parameters(), lr=LR, eps=1e-8))
 
             # Trainer 
-            trainer = Trainer(max_epochs=NUM_EPOCHS, 
-                              accelerator='gpu',
-                              devices=-1,
-                            #   logger=wandb_logger, 
-                            #   callbacks=[checkpoint_callback],
-                            #   enable_model_summary = False
-                              )
+            trainer = Trainer(
+                max_epochs=NUM_EPOCHS, 
+                accelerator='gpu',
+                devices=-1,
+                # logger=wandb_logger, 
+                # callbacks=[checkpoint_callback],
+                # enable_model_summary = False
+            )
             
             trainer.fit(model_classifier, train_loader)
             results = trainer.test(model_classifier, test_loader)
