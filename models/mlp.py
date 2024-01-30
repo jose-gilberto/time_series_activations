@@ -39,7 +39,7 @@ class MLPClassifier(MLP):
     def __init__(self, sequence_len: int, dimension_num: int, activation: nn.Module, num_classes: int, **kwargs) -> None:
         super().__init__(sequence_len, dimension_num, activation, **kwargs)
         self.num_classes = num_classes
-        self.output_layer = nn.Linear(in_features=500, out_features=num_classes)
+        self.output_layer = nn.Linear(in_features=500, out_features=num_classes if num_classes > 2 else 1)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x_ = super().forward(x)

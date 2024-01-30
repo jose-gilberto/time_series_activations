@@ -3,7 +3,7 @@ from torch import nn
 from torch.utils.data import DataLoader
 from utils.functions_cls import *
 import pandas as pd
-from aeon.datasets.tsc_data_lists import univariate_equal_length as dataset_list
+from aeon.datasets.tsc_data_lists import univariate_equal_length as dataset_list, univariate2015
 from aeon.datasets._data_loaders import load_classification
 # from pytorch_lightning.loggers.wandb import WandbLogger
 from pytorch_lightning import Trainer
@@ -13,8 +13,8 @@ from pytorch_lightning.callbacks import ModelCheckpoint
 from models import deeplearning_classifier as custom_estimator
 
 # Experiments and parameters
-NUM_EXPERIMENTS = 10
-NUM_EPOCHS = 5000
+NUM_EXPERIMENTS = 1
+NUM_EPOCHS = 1000
 LR = 1e-1
 BATCH_SIZE = 16
 HIDDEN_CHANNELS = 128
@@ -22,33 +22,49 @@ ACTIVATION = nn.ReLU()
 
 # Finished UCR Datasets list
 datasets = [
-    "ArrowHead",
-                        # "AtrialFibrillation",
-                        # "BasicMotions",
-                        # "Cricket",
-                        # "DuckDuckGeese",
-                        # "EigenWorms",
-                        # "Epilepsy",
-                        # "EthanolConcentration",
-                        # "ERing",
-                        # "FaceDetection",
-                        # "FingerMovements",
-                        # "HandMovementDirection",
-                        # "Handwriting",
-                        # "Heartbeat",
-                        # "Libras",
-                        # "LSST",
-                        # "MotorImagery",
-                        # "NATOPS",
-                        # "PenDigits",
-                        # "PEMS-SF",
-                        # "PhonemeSpectra",
-                        # "RacketSports",
-                        # "SelfRegulationSCP1",
-                        # "SelfRegulationSCP2",
-                        # "StandWalkJump",
-                        # "UWaveGestureLibrary",
-                    ]
+    'FordB',
+    'Symbols',
+    'CricketZ',
+    'ChlorineConcentration',
+    'DistalPhalanxTW',
+    'Strawberry',
+    'Worms',
+    'Wine',
+    'ProximalPhalanxTW',
+    'OliveOil',
+    'ShapeletSim',
+    'WormsTwoClass',
+    'ECGFiveDays',
+    'CinCECGTorso',
+    'DiatomSizeReduction',
+    'DistalPhalanxOutlineCorrect',
+    'ElectricDevices',
+    'SonyAIBORobotSurface1',
+    'UWaveGestureLibraryZ',
+    'Earthquakes',
+    'ECG200',
+    'FacesUCR',
+    'Car',
+    'ArrowHead',
+    'Plane',
+    'ShapesAll',
+    'Beef',
+    'ProximalPhalanxOutlineCorrect',
+    'CBF',
+    'SwedishLeaf',
+    'MiddlePhalanxOutlineAgeGroup',
+    'FaceAll',
+    'Ham',
+    'Phoneme',
+    'HandOutlines',
+    'NonInvasiveFetalECGThorax1',
+    'Herring',
+    'Lightning7',
+    'ToeSegmentation1',
+    'UWaveGestureLibraryX',
+    'DistalPhalanxOutlineAgeGroup',
+    'StarlightCurves'
+]
 
 # Finished Models list
 finished_models = [
@@ -76,9 +92,10 @@ results_dict = {
     'f1': []
 }
 
-for dataset_name in datasets:
+for dataset_name in univariate2015:
+    if dataset_name in datasets: continue
+    print('====== DATASET:', dataset_name, "======")
 
-    # print('====== DATASET:', dataset_name, "======")
     X_train, y_train = load_classification(dataset_name, split='train')
     X_test, y_test = load_classification(dataset_name, split='test')
     train_label_mapping = {label: idx for idx, label in enumerate(set(y_train))}
@@ -102,7 +119,9 @@ for dataset_name in datasets:
 
     for current_model in custom_estimator:
         if current_model in finished_models: continue
-        # print('***** MODEL:', current_model, "*****")
+
+        print('***** MODEL:', current_model, "*****")
+
         for experiment in range(NUM_EXPERIMENTS):
 
             # Loading Models and Parameters

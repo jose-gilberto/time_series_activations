@@ -3,7 +3,8 @@ import torch.nn as nn
 import torch.optim as optim
 from pytorch_lightning import LightningModule
 from torch.utils.data import Dataset
-from sklearn.metrics import f1_score
+from sklearn.metrics import f1_score, accuracy_score
+from torch.nn import functional as F
 
 class TimeSeriesClassifier(LightningModule):
     def __init__(self, model, optimizer):
@@ -19,37 +20,49 @@ class TimeSeriesClassifier(LightningModule):
         inputs, labels = batch
         # print(inputs.shape)
         logits = self(inputs)
-        loss = self.loss_fn(logits, labels.squeeze())
-        y_hat = torch.argmax(logits, dim=1)
-        acc = (y_hat == labels).float().mean()
-        f1 = f1_score(labels.squeeze().cpu().numpy(), y_hat.cpu().numpy(), average='macro')
-        self.log('train_loss', loss, on_epoch=True)
-        self.log('train_accuracy', acc, on_epoch=True)
-        self.log("val_f1", f1, prog_bar=False, on_epoch=True) # type: ignore
-        return loss
 
-    def validation_step(self, batch, batch_idx):
-        inputs, labels = batch
-        logits = self(inputs)
-        loss = self.loss_fn(logits, labels.squeeze())
-        y_hat = torch.argmax(logits, dim=1)
-        acc = (y_hat == labels).float().mean()
-        f1 = f1_score(labels.squeeze().cpu().numpy(), y_hat.cpu().numpy(), average='macro')
-        self.log('val_loss', loss, on_epoch=True)
-        self.log('val_accuracy', acc, on_epoch=True)
-        self.log("val_f1", f1, prog_bar=False, on_epoch=True) # type: ignore
+        if self.model.num_classes == 2:
+            logits = logits.squeeze(dim=-1).float()
+            labels = labels.float()
+            y_pred = F.sigmoid(logits).round()
+
+            y_pred = y_pred.cpu().detach().numpy()
+            y_true = labels.cpu().detach().numpy()
+        else:
+            y_pred = torch.argmax(logits, dim=1).cpu().detach().numpy()
+            y_true = labels.cpu().detach().numpy()
+
+        loss = self.loss_fn(logits, labels)
+
+        acc = accuracy_score(y_pred=y_pred, y_true=y_true)
+        f1 = f1_score(y_pred=y_pred, y_true=y_true, average='macro')
+        
+        self.log('train_loss', loss, prog_bar=True, on_epoch=True)
+        self.log('train_accuracy', acc, prog_bar=True, on_epoch=True)
+        self.log("train_f1", f1, prog_bar=True, on_epoch=True)
+        
         return loss
     
     def test_step(self, batch, batch_idx):
         inputs, labels = batch
         logits = self(inputs)
+        
+        if self.model.num_classes == 2:
+            logits = logits.squeeze(dim=-1)
+            y_pred = F.sigmoid(logits).round()
 
-        y_hat = torch.argmax(logits, dim=1)
-        acc = (y_hat == labels).float().mean()
-        f1 = f1_score(labels.squeeze().cpu().numpy(), y_hat.cpu().numpy(), average='macro')
+            y_pred = y_pred.cpu().detach().numpy()
+            y_true = labels.cpu().detach().numpy()
+        else:
+            y_pred = torch.argmax(logits, dim=1).cpu().detach().numpy()
+            y_true = labels.cpu().detach().numpy()
+
+        acc = accuracy_score(y_pred=y_pred, y_true=y_true)
+        f1 = f1_score(y_pred=y_pred, y_true=y_true, average='macro')
 
         self.log('accuracy', acc, on_epoch=True)
         self.log("f1", f1, prog_bar=False, on_epoch=True) # type: ignore
+
         return
 
     def configure_optimizers(self):
