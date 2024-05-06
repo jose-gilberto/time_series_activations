@@ -4,12 +4,11 @@ from torch import nn
 from torch.utils.data import DataLoader
 from utils.functions_cls import *
 import pandas as pd
-from aeon.datasets.tsc_data_lists import univariate_equal_length as dataset_list, univariate2015
-from aeon.datasets._data_loaders import load_classification
+from aeon.datasets.tsc_datasets import univariate_equal_length as dataset_list, univariate2015
+from aeon.datasets._data_loaders import load_classification, load_from_tsfile
 # from pytorch_lightning.loggers.wandb import WandbLogger
 from pytorch_lightning import Trainer
 from pytorch_lightning.callbacks import ModelCheckpoint
-from aeon.datasets._data_loaders import load_classification
 # from aeon.datasets.tsc_data_lists import univariate_equal_length as dataset_list
 # from pytorch_lightning.loggers.wandb import WandbLogger
 
@@ -24,50 +23,50 @@ BATCH_SIZE = 16
 HIDDEN_CHANNELS = 128
 ACTIVATION = nn.ReLU()
 
-# Finished UCR Datasets list
+# Run the model for these UCR Datasets
 datasets = [
     'FordB',
-    'Symbols',
-    'CricketZ',
-    'ChlorineConcentration',
-    'DistalPhalanxTW',
-    'Strawberry',
-    'Worms',
-    'Wine',
-    'ProximalPhalanxTW',
-    'OliveOil',
-    'ShapeletSim',
-    'WormsTwoClass',
-    'ECGFiveDays',
-    'CinCECGTorso',
-    'DiatomSizeReduction',
-    'DistalPhalanxOutlineCorrect',
-    'ElectricDevices',
-    'SonyAIBORobotSurface1',
-    'UWaveGestureLibraryZ',
-    'Earthquakes',
-    'ECG200',
-    'FacesUCR',
-    'Car',
-    'ArrowHead',
-    'Plane',
-    'ShapesAll',
-    'Beef',
-    'ProximalPhalanxOutlineCorrect',
-    'CBF',
-    'SwedishLeaf',
-    'MiddlePhalanxOutlineAgeGroup',
-    'FaceAll',
-    'Ham',
-    'Phoneme',
-    'HandOutlines',
-    'NonInvasiveFetalECGThorax1',
-    'Herring',
-    'Lightning7',
-    'ToeSegmentation1',
-    'UWaveGestureLibraryX',
-    'DistalPhalanxOutlineAgeGroup',
-    'StarlightCurves'
+    # 'Symbols',
+    # 'CricketZ',
+    # 'ChlorineConcentration',
+    # 'DistalPhalanxTW',
+    # 'Strawberry',
+    # 'Worms',
+    # 'Wine',
+    # 'ProximalPhalanxTW',
+    # 'OliveOil',
+    # 'ShapeletSim',
+    # 'WormsTwoClass',
+    # 'ECGFiveDays',
+    # 'CinCECGTorso',
+    # 'DiatomSizeReduction',
+    # 'DistalPhalanxOutlineCorrect',
+    # 'ElectricDevices',
+    # 'SonyAIBORobotSurface1',
+    # 'UWaveGestureLibraryZ',
+    # 'Earthquakes',
+    # 'ECG200',
+    # 'FacesUCR',
+    # 'Car',
+    # 'ArrowHead',
+    # 'Plane',
+    # 'ShapesAll',
+    # 'Beef',
+    # 'ProximalPhalanxOutlineCorrect',
+    # 'CBF',
+    # 'SwedishLeaf',
+    # 'MiddlePhalanxOutlineAgeGroup',
+    # 'FaceAll',
+    # 'Ham',
+    # 'Phoneme',
+    # 'HandOutlines',
+    # 'NonInvasiveFetalECGThorax1',
+    # 'Herring',
+    # 'Lightning7',
+    # 'ToeSegmentation1',
+    # 'UWaveGestureLibraryX',
+    # 'DistalPhalanxOutlineAgeGroup',
+    # 'StarlightCurves'
 ]
 
 # Finished Models list
@@ -91,11 +90,16 @@ results_dict = {
 }
 
 for dataset_name in univariate2015:
-    if dataset_name in datasets: continue
     print('====== DATASET:', dataset_name, "======")
 
+    # ----- AEON DATASETS -----
     X_train, y_train = load_classification(dataset_name, split='train')
     X_test, y_test = load_classification(dataset_name, split='test')
+    
+    # ----- CUSTOM .TS FILE -----
+    # X_train, y_train = load_from_tsfile(full_file_path_and_name='/home/andre/Code/IC/time_series_activations/ts_files/train')
+    # X_test, y_test = load_from_tsfile(full_file_path_and_name='/home/andre/Code/IC/time_series_activations/ts_files/test')
+
     train_label_mapping = {label: idx for idx, label in enumerate(set(y_train))}
     num_classes = len(set(y_train))
 
