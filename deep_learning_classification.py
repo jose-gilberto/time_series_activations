@@ -93,12 +93,12 @@ for dataset_name in datasets:
     print('====== DATASET:', dataset_name, "======")
 
     # ----- AEON DATASETS -----
-    # X_train, y_train = load_classification(dataset_name, split='train')
-    # X_test, y_test = load_classification(dataset_name, split='test')
+    X_train, y_train = load_classification(dataset_name, split='train')
+    X_test, y_test = load_classification(dataset_name, split='test')
     
     # ----- CUSTOM .TS FILE -----
-    X_train, y_train = load_from_tsfile(full_file_path_and_name='/home/andre/Code/IC/time_series_activations/ts_files/train')
-    X_test, y_test = load_from_tsfile(full_file_path_and_name='/home/andre/Code/IC/time_series_activations/ts_files/test')
+    # X_train, y_train = load_from_tsfile(full_file_path_and_name='/home/andre/Code/IC/time_series_activations/ts_files/train')
+    # X_test, y_test = load_from_tsfile(full_file_path_and_name='/home/andre/Code/IC/time_series_activations/ts_files/test')
 
     train_label_mapping = {label: idx for idx, label in enumerate(set(y_train))}
     num_classes = len(set(y_train))
