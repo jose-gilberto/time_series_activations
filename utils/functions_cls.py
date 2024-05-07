@@ -31,7 +31,7 @@ class TimeSeriesClassifier(LightningModule):
             y_pred = torch.argmax(logits, dim=1).cpu().detach().numpy()
             y_true = labels.cpu().detach().numpy()
 
-        loss = self.loss_fn(logits, labels)
+        loss = self.loss_fn(logits, labels.float())
 
         acc = accuracy_score(y_pred=y_pred, y_true=y_true)
         f1 = f1_score(y_pred=y_pred, y_true=y_true, average='macro')
@@ -55,11 +55,13 @@ class TimeSeriesClassifier(LightningModule):
         else:
             y_pred = torch.argmax(logits, dim=1).cpu().detach().numpy()
             y_true = labels.cpu().detach().numpy()
-
+        loss = self.loss_fn(logits, labels.float())
+        
         acc = accuracy_score(y_pred=y_pred, y_true=y_true)
         f1 = f1_score(y_pred=y_pred, y_true=y_true, average='macro')
-
-        self.log('accuracy', acc, on_epoch=True)
+        
+        self.log('loss', loss, prog_bar=False, on_epoch=True)
+        self.log('accuracy', acc, prog_bar=False, on_epoch=True)
         self.log("f1", f1, prog_bar=False, on_epoch=True) # type: ignore
 
         return
