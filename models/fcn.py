@@ -50,12 +50,13 @@ class FCN(nn.Module):
 class FCNClassifier(FCN):
     def __init__(self, dimension_num: int, activation: nn.Module, num_classes: int, **kwargs) -> None:
         super().__init__(dimension_num, activation, **kwargs)
-        self.output_layer = nn.Linear(in_features=128, out_features=num_classes)
+        self.num_classes = num_classes
+        self.output_layer = nn.Linear(in_features=128, out_features=num_classes if num_classes > 2 else 1)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x_ = super().forward(x)
         x_ = self.output_layer(x_)
-        return nn.functional.softmax(x_, dim=1)
+        return x_
 
 
 class FCNRegressor(FCN):

@@ -93,7 +93,7 @@ class ResNetClassifier(ResNet):
     def __init__(self, dimension_num: int, out_channels: int, activation: nn.Module, num_classes: int, **kwargs) -> None:
         super().__init__(dimension_num, out_channels, activation, **kwargs)
         self.num_classes = num_classes
-        self.output_layer = nn.Linear(out_channels * 2, num_classes)
+        self.output_layer = nn.Linear(out_channels * 2, out_features=num_classes if num_classes > 2 else 1)
 
     def forward(self, x):
         x_ = super().forward(x)
