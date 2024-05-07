@@ -145,7 +145,8 @@ for dataset_name in datasets:
                 devices=-1,
                 logger=wandb_logger, 
                 callbacks=[checkpoint_callback],
-                enable_model_summary = False
+                enable_model_summary = False,
+                experiment_name=f'{current_model}_{dataset_name}_exp{experiment:02d}',
             )
             
             trainer.fit(model_classifier, train_loader)
@@ -158,7 +159,7 @@ for dataset_name in datasets:
             results_dict['f1'].append(results[0]['f1'])
             
             results_dataframe = pd.DataFrame(results_dict)
-            results_dataframe.to_csv(f'./results_{current_model}_{dataset_name}_exp{experiment:02d}.csv', index=False)
+            results_dataframe.to_csv(f'./result_csv/results_{current_model}_{dataset_name}_exp{experiment:02d}.csv', index=False)
             test_acc = results[0]['accuracy']
             test_f1 = results[0]['f1']
             
