@@ -146,7 +146,6 @@ for dataset_name in datasets:
                 logger=wandb_logger, 
                 callbacks=[checkpoint_callback],
                 enable_model_summary = False,
-                experiment_name=f'{current_model}_{dataset_name}_exp{experiment:02d}',
             )
             
             trainer.fit(model_classifier, train_loader)
