@@ -62,7 +62,7 @@ class TimeSeriesClassifier(LightningModule):
         self.log('accuracy', acc, on_epoch=True)
         self.log("f1", f1, prog_bar=False, on_epoch=True) # type: ignore
 
-        return {'accuracy': acc, 'f1': f1}
+        return
 
     def configure_optimizers(self):
         return self.opt
