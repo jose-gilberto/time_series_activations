@@ -4,70 +4,68 @@ from torch import nn
 from torch.utils.data import DataLoader
 from utils.functions_cls import *
 import pandas as pd
-from aeon.datasets.tsc_data_lists import univariate_equal_length as dataset_list, univariate2015
-from aeon.datasets._data_loaders import load_classification
-# from pytorch_lightning.loggers.wandb import WandbLogger
+from aeon.datasets.tsc_datasets import univariate_equal_length as dataset_list, univariate2015
+from aeon.datasets._data_loaders import load_classification, load_from_tsfile
+from pytorch_lightning.loggers.wandb import WandbLogger
 from pytorch_lightning import Trainer
 from pytorch_lightning.callbacks import ModelCheckpoint
-from aeon.datasets._data_loaders import load_classification
-# from aeon.datasets.tsc_data_lists import univariate_equal_length as dataset_list
-# from pytorch_lightning.loggers.wandb import WandbLogger
 
 # Loading the CUSTOM MODELS into a dict
 from models import deeplearning_classifier as custom_estimator
 
 # Experiments and parameters
-NUM_EXPERIMENTS = 1
-NUM_EPOCHS = 1000
-LR = 1e-1
+NUM_EXPERIMENTS = 3
+NUM_EPOCHS = 50
+LR = 1e-8
 BATCH_SIZE = 16
 HIDDEN_CHANNELS = 128
 ACTIVATION = nn.ReLU()
 
-# Finished UCR Datasets list
+# Run the model for these UCR Datasets
 datasets = [
-    'FordB',
-    'Symbols',
-    'CricketZ',
-    'ChlorineConcentration',
-    'DistalPhalanxTW',
-    'Strawberry',
-    'Worms',
-    'Wine',
-    'ProximalPhalanxTW',
-    'OliveOil',
-    'ShapeletSim',
-    'WormsTwoClass',
-    'ECGFiveDays',
-    'CinCECGTorso',
-    'DiatomSizeReduction',
-    'DistalPhalanxOutlineCorrect',
-    'ElectricDevices',
-    'SonyAIBORobotSurface1',
-    'UWaveGestureLibraryZ',
-    'Earthquakes',
-    'ECG200',
-    'FacesUCR',
-    'Car',
-    'ArrowHead',
-    'Plane',
-    'ShapesAll',
-    'Beef',
-    'ProximalPhalanxOutlineCorrect',
-    'CBF',
-    'SwedishLeaf',
-    'MiddlePhalanxOutlineAgeGroup',
-    'FaceAll',
-    'Ham',
-    'Phoneme',
-    'HandOutlines',
-    'NonInvasiveFetalECGThorax1',
-    'Herring',
-    'Lightning7',
-    'ToeSegmentation1',
-    'UWaveGestureLibraryX',
-    'DistalPhalanxOutlineAgeGroup',
-    'StarlightCurves'
+    'EuropeanSTT',
+    # 'FordB',
+    # 'Symbols',
+    # 'CricketZ',
+    # 'ChlorineConcentration',
+    # 'DistalPhalanxTW',
+    # 'Strawberry',
+    # 'Worms',
+    # 'Wine',
+    # 'ProximalPhalanxTW',
+    # 'OliveOil',
+    # 'ShapeletSim',
+    # 'WormsTwoClass',
+    # 'ECGFiveDays',
+    # 'CinCECGTorso',
+    # 'DiatomSizeReduction',
+    # 'DistalPhalanxOutlineCorrect',
+    # 'ElectricDevices',
+    # 'SonyAIBORobotSurface1',
+    # 'UWaveGestureLibraryZ',
+    # 'Earthquakes',
+    # 'ECG200',
+    # 'FacesUCR',
+    # 'Car',
+    # 'ArrowHead',
+    # 'Plane',
+    # 'ShapesAll',
+    # 'Beef',
+    # 'ProximalPhalanxOutlineCorrect',
+    # 'CBF',
+    # 'SwedishLeaf',
+    # 'MiddlePhalanxOutlineAgeGroup',
+    # 'FaceAll',
+    # 'Ham',
+    # 'Phoneme',
+    # 'HandOutlines',
+    # 'NonInvasiveFetalECGThorax1',
+    # 'Herring',
+    # 'Lightning7',
+    # 'ToeSegmentation1',
+    # 'UWaveGestureLibraryX',
+    # 'DistalPhalanxOutlineAgeGroup',
+    # 'StarlightCurves'
 ]
 
 # Finished Models list
@@ -75,7 +73,7 @@ finished_models = [
     # 'MLPClassifier',
     # 'FCNClassifier',
     # 'ResNetClassifier',
-    # 'InceptionTimeClassifier',
+    'InceptionTimeClassifier',
 ]
 
 
@@ -90,12 +88,17 @@ results_dict = {
     'f1': []
 }
 
-for dataset_name in univariate2015:
-    if dataset_name in datasets: continue
+for dataset_name in datasets:
     print('====== DATASET:', dataset_name, "======")
 
-    X_train, y_train = load_classification(dataset_name, split='train')
-    X_test, y_test = load_classification(dataset_name, split='test')
+    # ----- AEON DATASETS -----
+    # X_train, y_train = load_classification(dataset_name, split='train')
+    # X_test, y_test = load_classification(dataset_name, split='test')
+    
+    # ----- CUSTOM .TS FILE -----
+    X_train, y_train = load_from_tsfile(full_file_path_and_name='/home/andre/Code/IC/time_series_activations/ts_files/train')
+    X_test, y_test = load_from_tsfile(full_file_path_and_name='/home/andre/Code/IC/time_series_activations/ts_files/test')
+
     train_label_mapping = {label: idx for idx, label in enumerate(set(y_train))}
     num_classes = len(set(y_train))
 
@@ -111,8 +114,8 @@ for dataset_name in univariate2015:
     test_dataset = TimeSeriesDataset(X_test, y_test, label_mapping=train_label_mapping)
 
     # Dataloaders
-    train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=4)
-    test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=4)
+    train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=4)
+    test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=4)
     
 
     for current_model in custom_estimator:
@@ -131,7 +134,7 @@ for dataset_name in univariate2015:
                 'hidden_channels': HIDDEN_CHANNELS,
                 'activation': ACTIVATION,
             }
-            # checkpoint_callback = ModelCheckpoint(dirpath='experiments', filename=f"cls_{current_model}_{dataset_name}_{experiment}", verbose=True, monitor='train_loss')
+            checkpoint_callback = ModelCheckpoint(dirpath='experiments', filename=f"cls_{current_model}_{dataset_name}_{experiment}", verbose=False, monitor='f1')
             model = custom_estimator[current_model](**model_params)
             model_classifier = TimeSeriesClassifier(model=model, optimizer=torch.optim.Adadelta(model.parameters(), lr=LR, eps=1e-8))
 
@@ -140,8 +143,8 @@ for dataset_name in univariate2015:
                 max_epochs=NUM_EPOCHS, 
                 accelerator='gpu',
                 devices=-1,
+                callbacks=[checkpoint_callback],
                 # logger=wandb_logger, 
-                # callbacks=[checkpoint_callback],
                 # enable_model_summary = False
             )
             
